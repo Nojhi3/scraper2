@@ -2,7 +2,7 @@ from fastapi import FastAPI, Query, BackgroundTasks
 import requests
 from pydantic import BaseModel
 from typing import List, Dict
-from together import Together
+import together 
 import os
 from fastapi.middleware.cors import CORSMiddleware
 import aiohttp
@@ -12,13 +12,15 @@ import re
 app = FastAPI()
 
 youtube_api = "AIzaSyAmt734ugZJiigg7C3VAzZLLJ3iKR1GrHc"
-together_api = "8b283a377efef633e1ca5ab57de868d6ac25b1af08c8ecd7a2b41a79ede116ef"
+together_api = os.getenv("TOGETHER_API_KEY")
+if not together_api:
+    raise ValueError("TOGETHER_API_KEY environment variable is not set!")
 google_api = "AIzaSyAmt734ugZJiigg7C3VAzZLLJ3iKR1GrHc"
 google_cse_id = "734a723e5c2d64e81"
 
 
 
-client = Together(api_key=together_api)
+client = together.Together(api_key=together_api)
 
 app.add_middleware(
     CORSMiddleware,
