@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: start;
+            height: 100vh;
+            background-color: #f4f4f4;
+            padding-top: 20px;
+        }
+        .container {
+            width: 50%;
+            text-align: center;
+        }
+        .search-box {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .search-button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .results {
+            margin-top: 20px;
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card {
+            background: white;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 80%;
+        }
+        .card a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        .list-results {
+            margin-top: 20px;
+            width: 60%;
+        }
+        .list-results a {
+            display: block;
+            margin: 5px 0;
+            text-decoration: none;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Search</h1>
+        <input type="text" id="query" class="search-box" placeholder="Enter your search query">
+        <button class="search-button" onclick="searchAI()">Search</button>
+        <div class="results" id="results"></div>
+        <div class="list-results" id="list-results"></div>
+    </div>
+
+    <script>
+        async function searchAI() {
+            const query = document.getElementById("query").value;
+            if (!query) {
+                alert("Please enter a search query");
+                return;
+            }
+
+            document.getElementById("results").innerHTML = "Loading results...";
+            document.getElementById("list-results").innerHTML = "";
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/search", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+                console.log("Received Data:", data);  // Debugging: Check received JSON
+                displayResults(data.results);
+            } catch (error) {
+                console.error("Error fetching search results:", error);
+                document.getElementById("results").innerHTML = "Error fetching results.";
+            }
+        }
+
+        function displayResults(results) {
+            const resultsContainer = document.getElementById("results");
+            const listResultsContainer = document.getElementById("list-results");
+            resultsContainer.innerHTML = "";
+            listResultsContainer.innerHTML = "";
+
+            let rankedResults = results["ranked"] || [];
+
+            console.log("Ranked Results (Before Sorting):", rankedResults);
+
+            rankedResults = rankedResults.sort((a, b) => b.score - a.score);
+
+            console.log("Ranked Results (After Sorting):", rankedResults);
+
+            if (rankedResults.length === 0) {
+                resultsContainer.innerHTML = "<p>No ranked results found.</p>";
+                return;
+            }
+
+            rankedResults.forEach(result => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <h3>${result.title}</h3>
+                    <p><strong>Score:</strong> ${result.score}</p>
+                    <a href="${result.link}" target="_blank">Read more</a>
+                `;
+                resultsContainer.appendChild(card);
+            });
+
+            Object.keys(results).forEach(source => {
+                if (source !== "ranked") {
+                    results[source].forEach(result => {
+                        const link = document.createElement("a");
+                        link.href = result.link;
+                        link.target = "_blank";
+                        link.innerHTML = `🔗 ${result.title}`;
+                        listResultsContainer.appendChild(link);
+                    });
+                }
+            });
+
+            console.log("Final Display Order:", resultsContainer.innerHTML);
+        }
+    </script>
+</body>
+</html>
